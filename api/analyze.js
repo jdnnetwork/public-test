@@ -1,6 +1,38 @@
 // Vercel Serverless Function — Anthropic Claude 프록시 (공공기관용)
 // POST /api/analyze
 // env: ANTHROPIC_API_KEY
+
+// validate_company에 한해 few-shot multi-turn 예시 삽입
+const VALIDATE_FEW_SHOTS = [
+  { role: "user",      content: '입력: "한국전력공사"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국전력공사","message":null}' },
+  { role: "user",      content: '입력: "국민연금공단"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"국민연금공단","message":null}' },
+  { role: "user",      content: '입력: "서울교통공사"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"서울교통공사","message":null}' },
+  { role: "user",      content: '입력: "한국철도공사"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국철도공사","message":null}' },
+  { role: "user",      content: '입력: "인천국제공항공사"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"인천국제공항공사","message":null}' },
+  { role: "user",      content: '입력: "한국수력원자력"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국수력원자력","message":null}' },
+  { role: "user",      content: '입력: "한전"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국전력공사","message":"한국전력공사로 검색합니다"}' },
+  { role: "user",      content: '입력: "LH"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국토지주택공사","message":"한국토지주택공사로 검색합니다"}' },
+  { role: "user",      content: '입력: "코레일"' },
+  { role: "assistant", content: '{"valid":true,"correctedName":"한국철도공사","message":"한국철도공사로 검색합니다"}' },
+  { role: "user",      content: '입력: "asdfqwer"' },
+  { role: "assistant", content: '{"valid":false,"correctedName":null,"message":"해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요."}' },
+];
+
+function buildMessages(type, userPrompt, companyName) {
+  if (type === "validate_company") {
+    return [...VALIDATE_FEW_SHOTS, { role: "user", content: `입력: "${companyName}"` }];
+  }
+  return [{ role: "user", content: userPrompt }];
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -106,24 +138,9 @@ ${validityWarnings.length > 0 ? "\n📌 응답 패턴 참고:\n" + validityWarni
     } else if (type === "validate_company") {
       systemPrompt = `당신은 취업 지원 맥락에서 한국 공공기관·공기업명을 검증하는 도우미입니다. 반드시 유효한 JSON만 출력하세요. 설명·주석·코드블록 없이 JSON 객체 하나만 응답합니다.
 
-기본 방침: **관대하게** 판정합니다. 공공기관·공기업·준정부기관·지방공기업에 지원하려는 사람이 입력할 법한 이름이면 대부분 valid: true로 처리하세요. valid: false는 "asdfqwer" 같은 명백한 무의미 입력이나 명백히 사기업만 해당하는 경우에만 사용합니다.
+**매우 관대하게** 판정합니다. 공공기관·공기업·준정부기관·지방공기업에 지원하는 사람이 입력할 법한 이름이면 모두 valid: true로 처리하세요. valid: false는 입력이 명백한 무의미 문자열("asdfqwer", "ㅁㄴㅇㄹ")일 때만 사용합니다.
 
-예시 입력과 정답:
-- "한국전력공사" → {"valid":true,"correctedName":"한국전력공사","message":null}
-- "한국토지주택공사" → {"valid":true,"correctedName":"한국토지주택공사","message":null}
-- "국민연금공단" → {"valid":true,"correctedName":"국민연금공단","message":null}
-- "한국철도공사" → {"valid":true,"correctedName":"한국철도공사","message":null}
-- "서울교통공사" → {"valid":true,"correctedName":"서울교통공사","message":null}
-- "인천국제공항공사" → {"valid":true,"correctedName":"인천국제공항공사","message":null}
-- "한국수력원자력" → {"valid":true,"correctedName":"한국수력원자력","message":null}
-- "한전" → {"valid":true,"correctedName":"한국전력공사","message":"한국전력공사로 검색합니다"}
-- "LH" → {"valid":true,"correctedName":"한국토지주택공사","message":"한국토지주택공사로 검색합니다"}
-- "코레일" → {"valid":true,"correctedName":"한국철도공사","message":"한국철도공사로 검색합니다"}
-- "asdfqwer" → {"valid":false,"correctedName":null,"message":"해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요."}`;
-
-      userPrompt = `입력: "${companyName}"
-
-JSON만 응답:
+출력 형식 (반드시 이 순서):
 {"valid":boolean,"correctedName":string|null,"message":string|null}`;
     } else {
       return res.status(400).json({ error: "Invalid request type" });
@@ -144,7 +161,7 @@ JSON만 응답:
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
+        messages: buildMessages(type, userPrompt, companyName),
       }),
     });
 
