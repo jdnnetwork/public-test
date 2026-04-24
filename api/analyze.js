@@ -104,24 +104,27 @@ ${validityWarnings.length > 0 ? "\n📌 응답 패턴 참고:\n" + validityWarni
 - 직무역량/기술적 위기관리 질문은 제외 (인성 기반 면접)
 - 응답 패턴 주의 신호가 있으면 1~2개를 자연스러운 검증 질문으로 대체 가능('비빈도/IF' 용어 금지)`;
     } else if (type === "validate_company") {
-      systemPrompt = `당신은 한국 공공기관·공기업명 검증 전문가입니다. 입력 문자열이 실존 공공기관/공기업인지 빠르게 판별합니다.
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
+      systemPrompt = `당신은 취업 지원 맥락에서 한국 공공기관·공기업명을 검증하는 도우미입니다. 반드시 유효한 JSON만 출력하세요. 설명·주석·코드블록 없이 JSON 객체 하나만 응답합니다.
 
-판별 규칙:
-- 실존 공공기관·공기업·준정부기관·지방공기업 포함이면 valid: true
-- 약칭/영문/철자 변형은 정식 명칭으로 correctedName에 보정 (예: "한전" → "한국전력공사", "LH" → "한국토지주택공사")
-- 오타라도 근처 정식 명칭이 강하게 유추되면 valid: true + correctedName 제시
-- 실존하지 않거나 공공기관이 아닌 경우(일반 사기업 등) valid: false`;
+기본 방침: **관대하게** 판정합니다. 공공기관·공기업·준정부기관·지방공기업에 지원하려는 사람이 입력할 법한 이름이면 대부분 valid: true로 처리하세요. valid: false는 "asdfqwer" 같은 명백한 무의미 입력이나 명백히 사기업만 해당하는 경우에만 사용합니다.
+
+예시 입력과 정답:
+- "한국전력공사" → {"valid":true,"correctedName":"한국전력공사","message":null}
+- "한국토지주택공사" → {"valid":true,"correctedName":"한국토지주택공사","message":null}
+- "국민연금공단" → {"valid":true,"correctedName":"국민연금공단","message":null}
+- "한국철도공사" → {"valid":true,"correctedName":"한국철도공사","message":null}
+- "서울교통공사" → {"valid":true,"correctedName":"서울교통공사","message":null}
+- "인천국제공항공사" → {"valid":true,"correctedName":"인천국제공항공사","message":null}
+- "한국수력원자력" → {"valid":true,"correctedName":"한국수력원자력","message":null}
+- "한전" → {"valid":true,"correctedName":"한국전력공사","message":"한국전력공사로 검색합니다"}
+- "LH" → {"valid":true,"correctedName":"한국토지주택공사","message":"한국토지주택공사로 검색합니다"}
+- "코레일" → {"valid":true,"correctedName":"한국철도공사","message":"한국철도공사로 검색합니다"}
+- "asdfqwer" → {"valid":false,"correctedName":null,"message":"해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요."}`;
 
       userPrompt = `입력: "${companyName}"
 
 JSON만 응답:
-{"valid": boolean, "correctedName": string 또는 null, "message": string 또는 null}
-
-필드 규칙:
-- valid=true이고 입력이 정식 명칭이면 correctedName은 입력값과 동일, message는 null
-- valid=true이고 보정 필요하면 correctedName에 정식 명칭, message에 "○○○로 검색합니다" 같은 짧은 안내
-- valid=false이면 correctedName null, message는 "해당 기관을 찾을 수 없습니다" 같은 짧은 안내`;
+{"valid":boolean,"correctedName":string|null,"message":string|null}`;
     } else {
       return res.status(400).json({ error: "Invalid request type" });
     }
