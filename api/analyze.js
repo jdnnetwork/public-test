@@ -1,6 +1,43 @@
 // Vercel Serverless Function — Anthropic Claude 프록시 (공공기관용)
 // POST /api/analyze
 // env: ANTHROPIC_API_KEY
+
+// 약자 → 정식명칭 매핑 (공공기관·공기업·준정부기관·국립병원)
+const ABBREV_MAP = {
+  // ── 공기업·공공기관 ──
+  "한전": "한국전력공사", "한수원": "한국수력원자력",
+  "LH": "한국토지주택공사",
+  "코레일": "한국철도공사", "KTX": "한국철도공사",
+  "가스공사": "한국가스공사", "지역난방": "한국지역난방공사",
+  "건보": "국민건강보험공단", "건강보험": "국민건강보험공단",
+  "국민연금": "국민연금공단", "공무원연금": "공무원연금공단",
+  "사학연금": "사립학교교직원연금공단",
+  "근로복지": "근로복지공단",
+  "한국은행": "한국은행", "수출입은행": "한국수출입은행",
+  "산업은행": "KDB산업은행", "기업은행": "IBK기업은행",
+  "주택금융": "한국주택금융공사",
+  "도로공사": "한국도로공사", "수자원": "한국수자원공사",
+  "농어촌공사": "한국농어촌공사",
+  "조폐공사": "한국조폐공사", "환경공단": "한국환경공단",
+  "서울교통": "서울교통공사", "부산교통": "부산교통공사",
+  "인천공항": "인천국제공항공사", "공항공사": "한국공항공사",
+  "관광공사": "한국관광공사",
+  // ── 국립병원 ──
+  "서울대병원": "서울대학교병원", "분당서울대": "분당서울대학교병원",
+  "국립중앙의료원": "국립중앙의료원", "국중원": "국립중앙의료원",
+  "국립암센터": "국립암센터",
+  "국립정신건강": "국립정신건강센터",
+  "경북대병원": "경북대학교병원", "전남대병원": "전남대학교병원",
+  "부산대병원": "부산대학교병원", "충남대병원": "충남대학교병원",
+  "충북대병원": "충북대학교병원", "전북대병원": "전북대학교병원",
+  "강원대병원": "강원대학교병원", "제주대병원": "제주대학교병원",
+};
+
+function resolveAbbreviation(raw) {
+  const name = (raw || "").trim();
+  return ABBREV_MAP[name] || name;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -16,7 +53,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
     const { type, companyName, testResults } = body;
 
-    // validate_company: AI 호출 없이 서버측 heuristic만 수행
+    // validate_company: AI 호출 없이 서버측 heuristic + 약자 매핑
     if (type === "validate_company") {
       const name = (companyName || "").trim();
       if (name.length < 2) {
@@ -26,40 +63,40 @@ export default async function handler(req, res) {
           message: "해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요.",
         });
       }
-      return res.status(200).json({ valid: true, correctedName: name, message: null });
+      const resolved = resolveAbbreviation(name);
+      const expanded = resolved !== name;
+      return res.status(200).json({
+        valid: true,
+        correctedName: resolved,
+        message: expanded ? `${resolved}(으)로 검색합니다` : null,
+      });
     }
 
     let systemPrompt, userPrompt;
 
     if (type === "analyze_company") {
       // 기관 분석: 공공기관/공기업 톤으로
-      systemPrompt = `당신은 한국 공공기관 채용 전문가입니다. 사용자가 입력한 기관명을 분석하여 리포트를 생성합니다.
+      systemPrompt = `당신은 한국 공공부문 채용·인재상 전문가입니다. 공공기관·공기업·준정부기관·지방공기업·국립병원을 다룹니다. 각 기관의 공직 가치와 조직 문화를 분석하여 리포트를 생성합니다.
 
-⚠️ 절대 준수: 사용자가 입력한 기관만 분석하세요. 다른 기관을 임의로 생성하지 마세요.
+⚠️ 절대 준수: 사용자가 입력한 **그 기관만** 분석하세요. 다른 기관으로 대체·생성 금지.
 
-입력값 해석 규칙 (반드시 따를 것):
-- 입력이 정식 명칭이면 그대로 사용
-- 입력이 약칭·영문 표기면 가장 널리 쓰이는 정식 명칭으로 해석
-  · "한전"   → 한국전력공사
-  · "LH"    → 한국토지주택공사
-  · "코레일"  → 한국철도공사
-  · "건보"   → 국민건강보험공단
-  · "국민연금" → 국민연금공단
-  · "공무원연금" → 공무원연금공단
-  · "한수원"  → 한국수력원자력
-  · "한국가스공사" → 한국가스공사
-  · "서울교통" → 서울교통공사
-  · 그 외 약칭도 한국에서 상식적으로 통용되는 정식 명칭으로 해석
+입력값은 이미 서버측에서 약칭이 풀네임으로 확장된 상태로 전달됩니다. 그대로 사용해 분석하면 됩니다.
+
+기관 유형별 분석 지침:
+- 공기업·공공기관·준정부기관: 공직 가치·청렴·공익성 중심 분석
+- 국립병원(서울대병원·국립중앙의료원 등): 의료진·행정직 채용 관점의 공공 의료 철학·기관 문화 분석
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.`;
-      userPrompt = `분석할 기관(입력값): "${companyName}"
 
-위 입력값에 해당하는 **실제 그 한국 공공기관/공기업**을 분석하세요. 입력이 약칭이면 위 시스템 규칙대로 정식 명칭으로 해석해서 그 기관을 분석하세요. 절대 다른 기관으로 바꿔서 분석하지 마세요.
+      const resolvedName = resolveAbbreviation(companyName);
+      userPrompt = `분석할 기관(입력값): "${resolvedName}"
+
+위 입력값에 해당하는 **실제 그 한국 공공기관·공기업·국립병원**을 분석하세요. 절대 다른 기관으로 바꿔 분석하지 마세요.
 
 이 기관의 공직 가치, 조직 문화, 인성검사에서 중요하게 보는 영역을 아래 JSON으로 채워주세요:
 
 {
-  "companyName": "해석한 정식 명칭",
+  "companyName": "${resolvedName}",
   "coreValues": "핵심 공직 가치 3~4개를 쉼표로",
   "talentProfile": "이 기관이 원하는 공직자상을 2~3문장으로 설명",
   "publicTestFocus": "이 기관 인성검사에서 특히 주의할 영역(예: 윤리·청렴·공익성 중심인지, 실무 실행력 중심인지 등)을 2~3문장으로",
