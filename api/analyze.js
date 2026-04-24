@@ -1,38 +1,6 @@
 // Vercel Serverless Function — Anthropic Claude 프록시 (공공기관용)
 // POST /api/analyze
 // env: ANTHROPIC_API_KEY
-
-// validate_company에 한해 few-shot multi-turn 예시 삽입
-const VALIDATE_FEW_SHOTS = [
-  { role: "user",      content: '입력: "한국전력공사"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국전력공사","message":null}' },
-  { role: "user",      content: '입력: "국민연금공단"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"국민연금공단","message":null}' },
-  { role: "user",      content: '입력: "서울교통공사"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"서울교통공사","message":null}' },
-  { role: "user",      content: '입력: "한국철도공사"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국철도공사","message":null}' },
-  { role: "user",      content: '입력: "인천국제공항공사"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"인천국제공항공사","message":null}' },
-  { role: "user",      content: '입력: "한국수력원자력"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국수력원자력","message":null}' },
-  { role: "user",      content: '입력: "한전"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국전력공사","message":"한국전력공사로 검색합니다"}' },
-  { role: "user",      content: '입력: "LH"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국토지주택공사","message":"한국토지주택공사로 검색합니다"}' },
-  { role: "user",      content: '입력: "코레일"' },
-  { role: "assistant", content: '{"valid":true,"correctedName":"한국철도공사","message":"한국철도공사로 검색합니다"}' },
-  { role: "user",      content: '입력: "asdfqwer"' },
-  { role: "assistant", content: '{"valid":false,"correctedName":null,"message":"해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요."}' },
-];
-
-function buildMessages(type, userPrompt, companyName) {
-  if (type === "validate_company") {
-    return [...VALIDATE_FEW_SHOTS, { role: "user", content: `입력: "${companyName}"` }];
-  }
-  return [{ role: "user", content: userPrompt }];
-}
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -48,6 +16,19 @@ export default async function handler(req, res) {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
     const { type, companyName, testResults } = body;
 
+    // validate_company: AI 호출 없이 서버측 heuristic만 수행
+    if (type === "validate_company") {
+      const name = (companyName || "").trim();
+      if (name.length < 2) {
+        return res.status(200).json({
+          valid: false,
+          correctedName: null,
+          message: "해당 기관을 찾을 수 없습니다. 정확한 기관명을 입력해주세요.",
+        });
+      }
+      return res.status(200).json({ valid: true, correctedName: name, message: null });
+    }
+
     let systemPrompt, userPrompt;
 
     if (type === "analyze_company") {
@@ -56,10 +37,12 @@ export default async function handler(req, res) {
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.`;
       userPrompt = `"${companyName}" 기관(공공기관/공기업)을 분석해주세요.
 
+입력값이 약칭·영문 표기(예: 한전→한국전력공사, LH→한국토지주택공사, 코레일→한국철도공사, 건보→국민건강보험공단)라면 가장 일반적인 정식 명칭으로 해석해서 분석하세요. "companyName" 필드에는 반드시 정식 명칭을 넣으세요 (입력이 이미 정식이면 그대로).
+
 이 기관의 공직 가치, 조직 문화, 인성검사에서 중요하게 보는 영역을 아래 JSON으로 채워주세요:
 
 {
-  "companyName": "${companyName}",
+  "companyName": "정식 명칭",
   "coreValues": "핵심 공직 가치 3~4개를 쉼표로",
   "talentProfile": "이 기관이 원하는 공직자상을 2~3문장으로 설명",
   "publicTestFocus": "이 기관 인성검사에서 특히 주의할 영역(예: 윤리·청렴·공익성 중심인지, 실무 실행력 중심인지 등)을 2~3문장으로",
@@ -135,20 +118,11 @@ ${validityWarnings.length > 0 ? "\n📌 응답 패턴 참고:\n" + validityWarni
 - 카테고리: 인성/가치관 5개, 공직윤리/청렴 5개, 대인관계/소통 5개, 업무태도/자세 5개
 - 직무역량/기술적 위기관리 질문은 제외 (인성 기반 면접)
 - 응답 패턴 주의 신호가 있으면 1~2개를 자연스러운 검증 질문으로 대체 가능('비빈도/IF' 용어 금지)`;
-    } else if (type === "validate_company") {
-      systemPrompt = `당신은 취업 지원 맥락에서 한국 공공기관·공기업명을 검증하는 도우미입니다. 반드시 유효한 JSON만 출력하세요. 설명·주석·코드블록 없이 JSON 객체 하나만 응답합니다.
-
-**매우 관대하게** 판정합니다. 공공기관·공기업·준정부기관·지방공기업에 지원하는 사람이 입력할 법한 이름이면 모두 valid: true로 처리하세요. valid: false는 입력이 명백한 무의미 문자열("asdfqwer", "ㅁㄴㅇㄹ")일 때만 사용합니다.
-
-출력 형식 (반드시 이 순서):
-{"valid":boolean,"correctedName":string|null,"message":string|null}`;
     } else {
       return res.status(400).json({ error: "Invalid request type" });
     }
 
-    const maxTokens = type === "validate_company" ? 200
-      : type === "analyze_company" ? 1024
-      : 4096;
+    const maxTokens = type === "analyze_company" ? 1024 : 4096;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -161,7 +135,7 @@ ${validityWarnings.length > 0 ? "\n📌 응답 패턴 참고:\n" + validityWarni
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: buildMessages(type, userPrompt, companyName),
+        messages: [{ role: "user", content: userPrompt }],
       }),
     });
 
