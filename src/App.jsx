@@ -234,6 +234,148 @@ const COMPANY_INPUT_CSS = `
 }
 `;
 
+const TIPS_CSS = `
+.tips-page {
+  --accent: #818cf8;
+  --accent-soft: rgba(129,140,248,0.12);
+  --accent-glow: rgba(129,140,248,0.3);
+  --bg: #0a0c10;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.14);
+  --text: #e5e7eb;
+  --text-muted: #8b92a0;
+  --text-dim: #5c6370;
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+.tips-page, .tips-page * { box-sizing: border-box; }
+.tips-haze {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--accent-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(129,140,248,0.06), transparent 60%);
+}
+.tips-content {
+  position: relative; z-index: 1; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48px 24px 64px;
+}
+.tips-topbar {
+  width: 100%; max-width: 580px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.tips-brand { color: var(--text-muted); display: inline-flex; align-items: center; }
+.tips-brand-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); margin-right: 8px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.tips-version { color: var(--text-dim); }
+.tips-hero { margin-top: 40px; text-align: center; max-width: 580px; }
+.tips-hero-badge {
+  width: 88px; height: 88px; margin: 0 auto 18px;
+  border: 1px solid var(--border-strong); border-radius: 16px;
+  background: radial-gradient(circle at 50% 40%, var(--accent-soft), transparent 70%);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.tips-hero-badge img { width: 64px; height: 64px; object-fit: contain; border-radius: 50%; }
+.tips-hero-title {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+  margin: 0 0 8px; line-height: 1.2; color: var(--text);
+}
+.tips-hero-title em {
+  font-style: normal; color: var(--accent);
+  text-shadow: 0 0 24px var(--accent-glow);
+}
+.tips-hero-sub { font-size: 14px; color: var(--text); font-weight: 500; letter-spacing: -0.01em; }
+.tips-callout {
+  width: 100%; max-width: 580px; margin-top: 32px;
+  padding: 16px 20px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(129,140,248,0.25);
+  border-left: 2px solid var(--accent);
+  border-radius: 8px;
+  font-size: 14.5px; color: var(--text); line-height: 1.65;
+}
+.tips-callout strong { color: var(--accent); font-weight: 600; }
+.tips-list {
+  width: 100%; max-width: 580px; margin-top: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.tips-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  padding: 18px 20px;
+  display: grid; grid-template-columns: 36px 1fr; gap: 14px;
+  position: relative;
+}
+.tips-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; color: var(--accent);
+  letter-spacing: 0.15em;
+  background: var(--accent-soft);
+  border: 1px solid rgba(129,140,248,0.25);
+  border-radius: 4px; padding: 3px 0;
+  text-align: center; height: fit-content; width: 36px;
+}
+.tips-title {
+  font-size: 14.5px; font-weight: 600; color: var(--text);
+  margin: 0 0 6px; letter-spacing: -0.01em;
+}
+.tips-body {
+  font-size: 12.5px; color: var(--text-muted);
+  line-height: 1.65; margin: 0;
+}
+.tips-body strong { color: var(--text); font-weight: 600; }
+.tips-body code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+  padding: 1px 6px; border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.tips-cta-wrap {
+  width: 100%; max-width: 580px; margin-top: 22px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.tips-cta {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px; width: 100%; padding: 16px 28px;
+  background: var(--accent-soft); border: 1px solid var(--accent);
+  color: var(--text); font-family: inherit;
+  font-size: 14px; font-weight: 600; letter-spacing: 0.02em;
+  border-radius: 10px; cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 24px rgba(129,140,248,0.15);
+}
+.tips-cta:hover {
+  background: var(--accent); color: var(--bg);
+  box-shadow: 0 0 32px rgba(129,140,248,0.4);
+}
+.tips-arrow { font-family: 'JetBrains Mono', monospace; font-weight: 400; transition: transform 0.15s ease; }
+.tips-cta:hover .tips-arrow { transform: translateX(3px); }
+.tips-back {
+  background: none; border: none; font-family: inherit;
+  font-size: 13.5px; color: rgba(229,231,235,0.75);
+  letter-spacing: -0.005em; cursor: pointer;
+  padding: 6px 10px; transition: color 0.15s ease;
+}
+.tips-back:hover { color: var(--text); }
+@media (max-width: 640px) {
+  .tips-content { padding: 24px 16px 40px; }
+  .tips-hero { margin-top: 24px; }
+  .tips-hero-title { font-size: 22px; }
+  .tips-card { padding: 14px 16px; grid-template-columns: 32px 1fr; gap: 12px; }
+}
+`;
+
 export default function App() {
   const [stage, setStage] = useState("intro");
   const [companyName, setCompanyName] = useState("");
@@ -478,35 +620,68 @@ export default function App() {
 
   // PRE-TIP (4 tips)
   if (stage === "pre_tip") {
-    const tips = [
-      { emoji: "⚖️", title: "적격/부적격으로 나뉘어요", body: "공공기관은 적격·부적격이 중요해요. 극단적 성향이 감지되면 다른 점수와 관계없이 부적격 판정을 받을 수 있어요." },
-      { emoji: "🏛️", title: "공익 관련 문항이 포함돼요", body: '"남이 보지 않아도 규칙을 지키는가" 같은 문항이 나와요. 공공기관에서는 이 영역도 중요합니다.' },
-      { emoji: "🙅", title: "완벽한 답변은 오히려 불리해요", body: "인성검사는 통계 기반이에요. 좋은 답변만 하려고 하면 비현실적 응답으로 분류돼요." },
-      { emoji: "⏱️", title: "나머지는 일반 인성검사와 동일해요", body: "비슷한 질문이 반복되고 역문항이 섞여 있고 과장 응답은 탐지돼요. 솔직하게, 문항 끝까지 읽고 직감적으로 답하세요." },
-    ];
     return (
-      <div style={S.wrap}><div style={S.box}>
-        <div style={{ height: 24 }} />
-        <DeepHeader subtitle={"검사 전 꼭 읽어주세요"} />
-        <div style={{ ...S.card, background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.3)", padding: "16px 18px", marginBottom: 14 }}>
-          <div style={{ fontSize: 14, lineHeight: 1.7, color: "#cbd5e0" }}>
-            공공기관 인성검사 전에 <span style={{ color: "#c7d2fe", fontWeight: 700 }}>4가지 핵심 팁</span>을 확인해 주세요.
+      <div className="tips-page">
+        <style>{TIPS_CSS}</style>
+        <div className="tips-haze" />
+        <div className="tips-content">
+          <div className="tips-topbar">
+            <div className="tips-brand"><span className="tips-brand-dot" />457DEEP · 딥둥이</div>
+            <div className="tips-version">v 1.0.0 · 공공기관</div>
+          </div>
+
+          <div className="tips-hero">
+            <div className="tips-hero-badge"><img src="/deepdungi.png" alt="딥둥이" /></div>
+            <h1 className="tips-hero-title">딥둥이 <em>공공기관 모의 인성검사</em></h1>
+            <div className="tips-hero-sub">검사 전 꼭 읽어주세요</div>
+          </div>
+
+          <div className="tips-callout">
+            공공기관 인성검사 전에 <strong>4가지 핵심 팁</strong>을 확인해 주세요. 이 팁만 알아도 통과 가능성이 크게 올라갑니다.
+          </div>
+
+          <div className="tips-list">
+            <div className="tips-card">
+              <div className="tips-num">TIP 1</div>
+              <div>
+                <h3 className="tips-title">적격/부적격으로 나뉘어요</h3>
+                <p className="tips-body">공공기관은 <strong>적격·부적격</strong>이 중요해요. 극단적 성향이 감지되면 다른 점수와 관계없이 <strong>부적격 판정</strong>을 받을 수 있어요.</p>
+              </div>
+            </div>
+            <div className="tips-card">
+              <div className="tips-num">TIP 2</div>
+              <div>
+                <h3 className="tips-title">공익 관련 문항이 포함돼요</h3>
+                <p className="tips-body"><code>"남이 보지 않아도 규칙을 지키는가"</code> 같은 문항이 나와요. 공공기관에서는 이 영역도 중요합니다.</p>
+              </div>
+            </div>
+            <div className="tips-card">
+              <div className="tips-num">TIP 3</div>
+              <div>
+                <h3 className="tips-title">완벽한 답변은 오히려 불리해요</h3>
+                <p className="tips-body">인성검사는 통계 기반이에요. 좋은 답변만 하려고 하면 <strong>비현실적 응답</strong>으로 분류돼요.</p>
+              </div>
+            </div>
+            <div className="tips-card">
+              <div className="tips-num">TIP 4</div>
+              <div>
+                <h3 className="tips-title">나머지는 일반 인성검사와 동일해요</h3>
+                <p className="tips-body">비슷한 질문이 반복되고 역문항이 섞여 있고 과장 응답은 탐지돼요. <strong>솔직하게, 문항 끝까지 읽고 직감적으로</strong> 답하세요.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="tips-cta-wrap">
+            <button className="tips-cta" onClick={startNewSession}>
+              확인했어요, 검사 시작
+              <span className="tips-arrow">→</span>
+            </button>
+            <button className="tips-back" onClick={() => setStage("company_input")}>
+              ← 기관명 다시 입력
+            </button>
           </div>
         </div>
-        {tips.map((t, i) => (
-          <div key={i} style={{ ...S.card, padding: "18px 20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 24 }}>{t.emoji}</span>
-              <span style={{ fontSize: 11, fontWeight: 900, color: "#c7d2fe", background: "rgba(129,140,248,0.15)", padding: "2px 8px", borderRadius: 6, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>TIP {i + 1}</span>
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#f1f5f9", marginBottom: 8, lineHeight: 1.5 }}>{t.title}</div>
-            <div style={{ fontSize: 14, lineHeight: 1.8, color: "#cbd5e0" }}>{t.body}</div>
-          </div>
-        ))}
-        <button style={{ ...S.btn(true), display: "block", width: "100%", padding: "18px", fontSize: 18, fontWeight: 800, marginTop: 8, boxShadow: "0 6px 24px rgba(129,140,248,0.3)" }} onClick={startNewSession}>확인했어요, 검사 시작 →</button>
-        <button style={{ display: "block", width: "100%", marginTop: 10, padding: "12px", background: "transparent", border: "none", color: "#94a3b8", fontSize: 13, cursor: "pointer" }} onClick={() => setStage("company_input")}>← 기관명 다시 입력</button>
-        <div style={{ height: 32 }} />
-      </div></div>
+      </div>
     );
   }
 
