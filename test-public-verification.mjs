@@ -129,6 +129,114 @@ const scenarios = [
       authLow:          r => r.authenticityScore.raw < 60,
     },
   },
+  // ─── 유형 다양성 시나리오 (8~13) ───
+  // 원점수(sc)로 판정하는지 확인 — 강 차원: 정=5/역=1 → raw≈100, 보통: randInt(2,4) → raw≈50
+  {
+    name: "8. 안정형 공직자 (EMO+RES+TSK 강, 나머지 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      const strong = q.dim === "EMO" || q.dim === "RES" || q.dim === "TSK";
+      if (strong) return q.rev ? 1 : 5;
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "안정형 공직자",
+      rawEMOHigh:       r => r.scores.EMO >= 70,
+      rawRESHigh:       r => r.scores.RES >= 65,
+      rawTSKHigh:       r => r.scores.TSK >= 65,
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
+  {
+    name: "9. 윤리형 봉사자 (ETH+COM+EMP 강, 나머지 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      const strong = q.dim === "ETH" || q.dim === "COM" || q.dim === "EMP";
+      if (strong) return q.rev ? 1 : 5;
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "윤리형 봉사자",
+      rawETHHigh:       r => r.scores.ETH >= 70,
+      rawCOMHigh:       r => r.scores.COM >= 65,
+      rawEMPHigh:       r => r.scores.EMP >= 65,
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
+  {
+    name: "10. 혁신형 추진자 (FLX+GRW+TSK 강, 나머지 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      const strong = q.dim === "FLX" || q.dim === "GRW" || q.dim === "TSK";
+      if (strong) return q.rev ? 1 : 5;
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "혁신형 추진자",
+      rawFLXHigh:       r => r.scores.FLX >= 70,
+      rawGRWHigh:       r => r.scores.GRW >= 70,
+      rawTSKHigh:       r => r.scores.TSK >= 65,
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
+  {
+    name: "11. 소통형 조율자 (REL+EMP+COM 강, 나머지 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      const strong = q.dim === "REL" || q.dim === "EMP" || q.dim === "COM";
+      if (strong) return q.rev ? 1 : 5;
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "소통형 조율자",
+      rawRELHigh:       r => r.scores.REL >= 70,
+      rawEMPHigh:       r => r.scores.EMP >= 65,
+      rawCOMHigh:       r => r.scores.COM >= 65,
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
+  {
+    name: "12. 실무형 전문가 (TSK+FLX+EMO 강, REL 낮음, 나머지 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      if (q.dim === "REL") return q.rev ? 5 : 1;
+      const strong = q.dim === "TSK" || q.dim === "FLX" || q.dim === "EMO";
+      if (strong) return q.rev ? 1 : 5;
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "실무형 전문가",
+      rawTSKHigh:       r => r.scores.TSK >= 70,
+      rawFLXHigh:       r => r.scores.FLX >= 65,
+      rawEMOHigh:       r => r.scores.EMO >= 65,
+      rawRELLow:        r => r.scores.REL < 60,
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
+  {
+    name: "13. 균형형 공직자 (전부 보통)",
+    answer: (q, rand) => {
+      if (q.dim === "SD") return randInt(rand, 1, 2);
+      if (q.dim === "IF") return randInt(rand, 1, 2);
+      if (NEG_DIMS_ORDER.includes(q.dim)) return randInt(rand, 1, 2);
+      return randInt(rand, 2, 4);
+    },
+    expect: {
+      typeMatches:      r => r.personalityType.name === "균형형 공직자",
+      noDimAbove65:     r => DIMS_ORDER.every(d => r.scores[d] < 65),
+      notDisqualified:  r => !r.validityChecks.disqualifying.disqualified,
+    },
+  },
 ];
 
 // ─── 출력 ───
